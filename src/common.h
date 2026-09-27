@@ -1,8 +1,5 @@
 /*
- * common.h - Shared types and helpers used by every module.
- *
- * Agreed interface between the I/O, threading, multiprocessing and
- * IPC/merge parts of the project. Keep this file small and stable.
+ * common.h - Small shared definitions used by every file.
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -13,30 +10,36 @@
 
 #define MAX_WORKERS 64
 
-/* One contiguous slice of the data array, in elements (not bytes). */
+/*
+ * One piece of the big array. It covers the elements
+ * data[start], data[start + 1], ..., data[end - 1]   (end is NOT included).
+ */
 typedef struct {
-    size_t offset;
-    size_t len;
+    size_t start;
+    size_t end;
 } chunk_t;
 
-/* Monotonic wall-clock time in seconds. */
-static inline double now_sec(void)
+/* Current time in seconds from a clock that never jumps backwards. */
+static inline double now_seconds(void)
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
 }
 
-/* Split n elements into k nearly equal chunks (first n % k get one extra). */
-void chunks_split(size_t n, int k, chunk_t *chunks);
+/* Split n elements into k chunks of (almost) the same size. */
+void split_into_chunks(size_t n, int k, chunk_t *chunks);
 
-/* Sort base[0..n) ascending, in place. */
-void sort_chunk(int32_t *base, size_t n);
+/* Sort a[0..n) with merge sort. Returns 0 on success, -1 if out of memory. */
+int merge_sort(int32_t *a, size_t n);
 
-/* Order-independent checksum used to verify nothing was lost or duplicated. */
-uint64_t checksum(const int32_t *a, size_t n);
-
-/* Returns 1 if a[0..n) is non-decreasing, 0 otherwise. */
+/* Returns 1 if a[0..n) is in ascending order, otherwise 0. */
 int is_sorted(const int32_t *a, size_t n);
 
-#endif /* COMMON_H */
+/*
+ * Sum of all values. Sorting only moves values around, so the sum must be
+ * the same before and after. (1 billion * 2^31 still fits in 64 bits.)
+ */
+int64_t checksum(const int32_t *a, size_t n);
+
+#endif
