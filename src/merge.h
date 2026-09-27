@@ -1,28 +1,19 @@
 /*
- * merge.h - N-way merge of sorted chunks using a binary min-heap.
- *
- * Cost: O(n log k) comparisons for n total elements and k chunks.
+ * merge.h - N-way merge of sorted chunks using a min-heap.
+ * Used by BOTH the thread mode and the process mode.
  */
 #ifndef MERGE_H
 #define MERGE_H
 
-#include <stddef.h>
 #include <stdint.h>
 
 #include "common.h"
 
 /*
- * Merge k sorted chunks of `src` into `dst` (which must hold the sum of all
- * chunk lengths and must not overlap `src`). Returns 0, or -1 on bad input.
+ * `src` contains k chunks, each already sorted on its own.
+ * Writes all elements, fully sorted, into `dst` (a separate array that is
+ * big enough for all of them). Returns 0 on success, -1 on error.
  */
-int merge_k(const int32_t *src, const chunk_t *chunks, int k, int32_t *dst);
+int merge_chunks(const int32_t *src, const chunk_t *chunks, int k, int32_t *dst);
 
-/*
- * Same merge, but streams the result to file descriptor `fd` through a
- * buffer of `buf_bytes` (e.g. 8 MiB) instead of needing a second full-size
- * array. Handles partial writes and EINTR. Returns 0, or -1 on error.
- */
-int merge_k_to_fd(const int32_t *src, const chunk_t *chunks, int k,
-                  int fd, size_t buf_bytes);
-
-#endif /* MERGE_H */
+#endif
